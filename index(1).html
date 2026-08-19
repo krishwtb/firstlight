@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="First Light">
+<meta name="theme-color" content="#08070A">
+<title>First Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500;600&family=Noto+Serif+Devanagari:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#08070A; --ash:#141118; --ox:#3D0A16;
+    --ember:#FF7A18; --gold:#FFB320; --bone:#F2EFE6; --dim:#7A7285;
+    --heat:0;
+    --disp:"Anton", Impact, sans-serif;
+    --serif:"Instrument Serif", Georgia, serif;
+    --body:"Inter Tight", ui-sans-serif, system-ui, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, monospace;
+    --dev:"Noto Serif Devanagari", serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--body);color:var(--bone);background:var(--void);
+    overflow:hidden;-webkit-user-select:none;user-select:none}
+  .bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(90% 55% at 50% 106%,
+        rgba(255,122,24,calc(var(--heat)*0.62)) 0%,
+        rgba(190,40,20,calc(var(--heat)*0.34)) 34%,
+        rgba(61,10,22,calc(var(--heat)*0.55)) 60%,
+        transparent 80%),
+      linear-gradient(180deg,#08070A 0%,#100C12 62%,#1A0E14 100%);
+    transition:background 380ms linear}
+  .grain{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  .wrap{position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;
+    padding:max(18px,env(safe-area-inset-top)) 22px max(18px,env(safe-area-inset-bottom));
+    display:flex;flex-direction:column}
+  .topbar{display:flex;justify-content:space-between;align-items:center;
+    font-family:var(--mono);font-size:10px;letter-spacing:.28em;color:var(--dim);text-transform:uppercase}
+  .screen{flex:1;display:none;flex-direction:column;min-height:0}
+  .screen.on{display:flex}
+  h1{font-family:var(--disp);font-weight:400;font-size:clamp(60px,19vw,92px);line-height:.84;
+    letter-spacing:.005em;text-transform:uppercase;margin:26px 0 16px}
+  .rule{height:2px;background:linear-gradient(90deg,var(--ember),rgba(255,122,24,0));margin:0 0 16px}
+  .sub{color:var(--dim);font-size:15px;line-height:1.55;margin:0}
+  .spacer{flex:1}
+  button{font:inherit;cursor:pointer;border:0;border-radius:2px}
+  .primary{width:100%;padding:21px;background:var(--ember);color:#140803;
+    font-family:var(--disp);font-size:22px;letter-spacing:.09em;text-transform:uppercase}
+  .primary:active{transform:translateY(1px)}
+  .ghost{width:100%;padding:15px;background:transparent;color:var(--dim);
+    border:1px solid rgba(122,114,133,.3);font-size:13px;letter-spacing:.06em;margin-top:10px;
+    text-transform:uppercase;font-family:var(--mono)}
+  .quiet{background:none;color:var(--dim);font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;padding:14px 0;width:100%}
+  :focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+  /* ring */
+  .ringwrap{flex:1;display:grid;place-items:center;position:relative;min-height:0}
+  #ring{width:min(340px,84vw);height:min(340px,84vw);display:block}
+  .ringtext{position:absolute;text-align:center;pointer-events:none}
+  .count{font-family:var(--disp);font-size:clamp(76px,25vw,116px);line-height:.86;
+    letter-spacing:.01em;color:var(--bone)}
+  .of{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--dim);margin-top:8px}
+  .repline{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--dim);min-height:15px;text-align:center;padding:14px 8px 4px}
+  .repline.warn{color:var(--ember)}
+  /* quote */
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;
+    color:var(--dim);margin:22px 0 0}
+  .quote{font-family:var(--serif);font-weight:400;font-size:clamp(27px,7.4vw,36px);line-height:1.22;
+    letter-spacing:-.01em;margin:16px 0 0}
+  .who{font-family:var(--disp);font-size:clamp(26px,7vw,34px);letter-spacing:.05em;
+    text-transform:uppercase;color:var(--ember);margin:26px 0 4px;line-height:1}
+  .srcline{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--dim)}
+  .devnag{font-family:var(--dev);font-size:15px;color:var(--dim);opacity:.75;margin-top:5px}
+  .why{display:none;border-left:2px solid var(--ox);padding:2px 0 2px 16px;margin-top:20px;
+    font-size:15px;line-height:1.6;color:#C8C2CE}
+  .why.on{display:block}
+  .stats{display:flex;gap:26px;font-family:var(--mono);font-size:10px;color:var(--dim);
+    letter-spacing:.18em;text-transform:uppercase;padding:26px 0 6px}
+  .stats b{display:block;font-family:var(--disp);color:var(--bone);font-size:30px;
+    font-weight:400;letter-spacing:.02em;margin-bottom:2px}
+  /* setup */
+  .field{margin:18px 0}
+  label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--dim);margin-bottom:9px}
+  input[type=number]{width:100%;padding:15px;background:rgba(255,255,255,.04);
+    border:1px solid rgba(122,114,133,.26);border-radius:2px;color:var(--bone);font:17px var(--mono)}
+  input[type=range]{width:100%;accent-color:var(--ember)}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:15px;background:rgba(255,255,255,.04);color:var(--dim);
+    border:1px solid rgba(122,114,133,.26);font-family:var(--mono);font-size:12px;
+    letter-spacing:.14em;text-transform:uppercase}
+  .seg button.sel{background:var(--ember);color:#140803;border-color:var(--ember)}
+  .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1}
+  .note{font-size:13px;color:var(--dim);line-height:1.55;margin-top:11px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="grain"></div>
+<div class="wrap">
+  <div class="topbar"><span id="clock">--:--</span><span id="tag">Locked</span></div>
+
+  <section class="screen on" id="s-gate">
+    <h1>Get<br>up.</h1>
+    <div class="rule"></div>
+    <p class="sub" id="gateSub"></p>
+    <div class="spacer"></div>
+    <p class="sub" id="bailNote"></p>
+    <button class="primary" id="startBtn">Begin</button>
+    <button class="quiet" id="toSetup">Settings</button>
+  </section>
+
+  <section class="screen" id="s-reps">
+    <div class="ringwrap">
+      <canvas id="ring"></canvas>
+      <div class="ringtext">
+        <div class="count" id="repCount">0</div>
+        <div class="of">of <span id="repTarget">20</span></div>
+      </div>
+    </div>
+    <div class="repline" id="repMsg">reading motion</div>
+    <button class="ghost" id="bailBtn">Give up &mdash; logged</button>
+  </section>
+
+  <section class="screen" id="s-quote">
+    <div class="scroll">
+      <p class="eyebrow">Today's line</p>
+      <p class="quote" id="qText">&mdash;</p>
+      <p class="who" id="qWho"></p>
+      <p class="srcline" id="qSrc"></p>
+      <p class="devnag" id="qDev"></p>
+      <div class="why" id="qWhy"></div>
+      <button class="ghost" id="whyBtn">What it means</button>
+      <div class="stats">
+        <div><b id="streakN">0</b>streak</div>
+        <div><b id="bailN">0</b>bails</div>
+        <div><b id="upN">--:--</b>up at</div>
+      </div>
+    </div>
+    <button class="quiet" id="toSetup2">Settings</button>
+  </section>
+
+  <section class="screen" id="s-setup">
+    <div class="scroll">
+      <h1>Set<br>up.</h1>
+      <div class="rule"></div>
+      <div class="field"><label>Exercise</label>
+        <div class="seg"><button id="exPush">Pushups</button><button id="exSquat">Squats</button></div>
+        <p class="note" id="exNote"></p></div>
+      <div class="field"><label>Reps to unlock</label><input type="number" id="rt" min="1" max="200"></div>
+      <div class="field"><label>Sensitivity &mdash; <span id="sensLbl">normal</span></label>
+        <input type="range" id="sens" min="0" max="4" step="1">
+        <p class="note">Reps closer than 0.7s apart are thrown out, so shaking it in bed gets you nowhere.</p></div>
+      <button class="ghost" id="practiceBtn">Test the sensor</button>
+    </div>
+    <button class="primary" id="saveBtn">Save</button>
+  </section>
+</div>
+
+<script>
+/* ---------- the lines ---------- */
+const QUOTES = [
+{t:"You have a right to the work itself, never to what it yields. Do not let the reward be your reason, and do not use that as an excuse to do nothing.",
+ w:"Krishna", s:"Bhagavad Gita 2.47", d:"भगवद्गीता",
+ y:"The famous one, and the most misread. He is not saying results don't matter. He is saying the result is not the part you control, so hanging your effort on it is what makes you freeze. Control the rep. The outcome shows up on its own."},
+{t:"Skill in action — that is what this discipline actually is.",
+ w:"Krishna", s:"Bhagavad Gita 2.50", d:"भगवद्गीता",
+ y:"Yoga here is not stretching. It is doing the thing in front of you cleanly, without the internal drama. Less negotiation, more execution."},
+{t:"On this path no effort is wasted and nothing you start is lost. Even a little of it protects you from real fear.",
+ w:"Krishna", s:"Bhagavad Gita 2.40", d:"भगवद्गीता",
+ y:"A half-finished attempt still counts. Nothing you put in gets deleted when you slip up, which removes the excuse that you already ruined the streak so today doesn't matter."},
+{t:"Lift yourself by your own hand. Do not drag yourself down. You are your own ally and your own enemy.",
+ w:"Krishna", s:"Bhagavad Gita 6.5", d:"भगवद्गीता",
+ y:"Nobody is coming to get you out of bed. The same person who set the alarm is the one arguing with it."},
+{t:"For the one who has taken himself in hand, the self works like a friend. For the one who has not, it works against him like an enemy.",
+ w:"Krishna", s:"Bhagavad Gita 6.6", d:"भगवद्गीता",
+ y:"Your habits are either running for you or running you. There is no neutral setting."},
+{t:"This discipline is not for the one who eats too much or too little, who sleeps too much or stays up too long.",
+ w:"Krishna", s:"Bhagavad Gita 6.16", d:"भगवद्गीता",
+ y:"Blunt and practical. Everything else falls apart on top of bad sleep and bad food. Fix the base before you chase discipline."},
+{t:"Heat and cold, pleasure and pain — they turn up, they leave, they do not stay. Learn to sit through them.",
+ w:"Krishna", s:"Bhagavad Gita 2.14", d:"भगवद्गीता",
+ y:"The urge to stay in bed is weather. It peaks in about ninety seconds and passes. Waiting it out is a skill you can train."},
+{t:"Dwell on a thing and you get attached. Attachment breeds craving. Craving blocked becomes anger, anger becomes confusion, and confusion wipes out your judgement.",
+ w:"Krishna", s:"Bhagavad Gita 2.62", d:"भगवद्गीता",
+ y:"A precise map of the doomscroll. It starts with looking, not with wanting. Cut it at the looking."},
+{t:"Your own work done badly beats someone else's done well.",
+ w:"Krishna", s:"Bhagavad Gita 3.35", d:"भगवद्गीता",
+ y:"Comparison is a tax on your attention. The person you are watching has a different assignment."},
+{t:"Do the work you were given. Doing beats not doing — you could not even keep your body running otherwise.",
+ w:"Krishna", s:"Bhagavad Gita 3.8", d:"भगवद्गीता",
+ y:"Inaction feels neutral. It isn't. It is a decision with a cost that gets charged later."},
+{t:"Do not walk away from the work you were made for because it has faults in it. Every effort has a fault in it, like every fire has smoke.",
+ w:"Krishna", s:"Bhagavad Gita 18.48", d:"भगवद्गीता",
+ y:"Perfectionism is procrastination in nicer clothing. The flaw is not a sign you picked wrong."},
+{t:"The pleasures that arrive from outside you have a start and a finish. They are the womb of the pain that follows them.",
+ w:"Krishna", s:"Bhagavad Gita 5.22", d:"भगवद्गीता",
+ y:"Forty minutes of scrolling never once left you feeling better than when you started. That is the mechanism, not bad luck."},
+{t:"Three gates open onto ruin: craving, anger, and greed. Shut all three.",
+ w:"Krishna", s:"Bhagavad Gita 16.21", d:"भगवद्गीता",
+ y:"Short list, easy audit. Ask which of the three is driving before you act on the impulse."},
+{t:"The mind is restless and hard to hold, no argument. But it can be trained — by steady practice and by letting go.",
+ w:"Krishna", s:"Bhagavad Gita 6.35", d:"भगवद्गीता",
+ y:"Arjuna says the mind is impossible to control. Krishna doesn't deny it, he just says do it anyway, slowly. Practice plus detachment. Nothing mystical."},
+{t:"Work with your footing steady, drop the attachment, stay level whether it lands or fails. That evenness is the whole thing.",
+ w:"Krishna", s:"Bhagavad Gita 2.48", d:"भगवद्गीता",
+ y:"Motivation swings. Evenness is what you build so the swings stop deciding your day."},
+{t:"There is nothing in this world that cleans you out like understanding.",
+ w:"Krishna", s:"Bhagavad Gita 4.38", d:"भगवद्गीता",
+ y:"Seeing the pattern clearly is already most of the work. You cannot fight a habit you refuse to look at."},
+{t:"Get up. Wake up. Find those who know, and do not stop until you have understood.",
+ w:"Yama, to Nachiketa", s:"Katha Upanishad 1.3.14", d:"कठोपनिषद्",
+ y:"Death himself is the teacher in this story, which is the point — the urgency is not motivational fluff. The edge of a blade is hard to walk, and he says walk it anyway."},
+{t:"Two things come to every person: the pleasant and the good. They pull in different directions. The one with sense picks the good.",
+ w:"Yama, to Nachiketa", s:"Katha Upanishad 1.2.2", d:"कठोपनिषद्",
+ y:"This is the 6am decision, written down about 2,500 years ago. The pleasant is the bed. The good is the floor. They will never feel equally attractive."},
+{t:"Treat the body as the chariot and yourself as the rider. Reason is the driver, the mind is the reins, and the senses are the horses.",
+ w:"Yama, to Nachiketa", s:"Katha Upanishad 1.3.3", d:"कठोपनिषद्",
+ y:"If the driver is asleep, the horses take you wherever they want. Which is usually back under the blanket, or into another app."},
+{t:"This self is not reached by someone without strength, nor by drifting, nor by discipline pointed in no direction.",
+ w:"Mundaka Upanishad", s:"Mundaka Upanishad 3.2.4", d:"मुण्डकोपनिषद्",
+ y:"Effort alone is not enough — it has to be aimed. Being busy and being disciplined are not the same thing."},
+{t:"You are what your deepest drive is. What your drive is, your will becomes. What your will is, your action becomes. What your action is, you become.",
+ w:"Yajnavalkya", s:"Brihadaranyaka Upanishad 4.4.5", d:"बृहदारण्यकोपनिषद्",
+ y:"A chain from wanting to being, with action as the hinge. What you actually do is the only link you can grab."},
+{t:"Truth alone wins in the end.",
+ w:"Mundaka Upanishad", s:"Mundaka Upanishad 3.1.6", d:"सत्यमेव जयते",
+ y:"Including the truth you tell yourself about how you have actually been spending your mornings. The bail counter is that line applied to you."},
+{t:"Speak what is true. Do what is right. Do not neglect the work of learning.",
+ w:"Taittiriya Upanishad", s:"Taittiriya Upanishad 1.11", d:"तैत्तिरीयोपनिषद्",
+ y:"The oldest graduation speech on record. Three instructions, no theory, all of them things you do rather than believe."},
+{t:"Yoga is the stilling of the churn of the mind.",
+ w:"Patanjali", s:"Yoga Sutras 1.2", d:"योगसूत्र",
+ y:"The definition, in one line. Not calm as a mood — calm as the absence of the noise that keeps you scrolling to drown it out."},
+{t:"That practice becomes solid ground only when it is kept up for a long time, without gaps, and with real seriousness.",
+ w:"Patanjali", s:"Yoga Sutras 1.14", d:"योगसूत्र",
+ y:"Three conditions and you need all three. Long, unbroken, sincere. The gap is what kills most attempts — not intensity."},
+{t:"The suffering that has not yet arrived is the one worth avoiding.",
+ w:"Patanjali", s:"Yoga Sutras 2.16", d:"योगसूत्र",
+ y:"Aimed straight at today. The wasted afternoon has not happened yet. That is exactly why it is still preventable."},
+{t:"Work gets done through effort, not through wishing for it. Deer do not walk into a sleeping lion's mouth.",
+ w:"Hitopadesha", s:"Hitopadesha", d:"हितोपदेश",
+ y:"The single best line ever written about procrastination. The lion is strong and asleep, so it starves. Capability is not the problem."},
+{t:"Before you begin anything, ask three things: why am I doing this, what will come of it, and can I actually pull it off.",
+ w:"Chanakya", s:"Chanakya Niti", d:"चाणक्य नीति",
+ y:"Thirty seconds of this kills most of the fake work you were about to do instead of the real thing."},
+{t:"The moment a fear comes close, go at it and break it.",
+ w:"Chanakya", s:"Chanakya Niti", d:"चाणक्य नीति",
+ y:"Avoidance grows the thing it is avoiding. The task you keep sliding to tomorrow gets heavier every time you slide it."},
+{t:"Time makes a person, and time finishes them.",
+ w:"Chanakya", s:"Chanakya Niti", d:"चाणक्य नीति",
+ y:"Same resource, both outcomes. The only variable is what you did inside it."},
+{t:"There is no strength greater than the will to keep going. Nothing in this world is out of reach of the one who keeps at it.",
+ w:"Rama", s:"Valmiki Ramayana, Kishkindha Kanda", d:"रामायण",
+ y:"Said to a group who had given up mid-search. Persistence is described as a strength here, on the same shelf as physical power."},
+{t:"This is the great wonder: people die around us every day, and everyone still lives as though they will not.",
+ w:"Yudhishthira", s:"Mahabharata, Yaksha Prashna", d:"महाभारत",
+ y:"His answer to the riddle that saved his brothers. Not morbid — it is just the honest reason the afternoon you are about to waste is not free."},
+{t:"Take up one idea. Make that one idea your life. Think of it, dream of it, live on it. Leave every other idea alone.",
+ w:"Swami Vivekananda", s:"Swami Vivekananda", d:"स्वामी विवेकानन्द",
+ y:"Focus stated as narrowing, not as effort. Most days you are not short on discipline, you are short on subtraction."},
+{t:"The one real sin is calling yourself weak, and calling others weak.",
+ w:"Swami Vivekananda", s:"Swami Vivekananda", d:"स्वामी विवेकानन्द",
+ y:"He treated the belief as the actual damage. Once you have accepted that you are just someone who cannot get up, you stop testing it."},
+{t:"Arise, awake, and stop only when the goal is reached.",
+ w:"Swami Vivekananda", s:"after the Katha Upanishad", d:"स्वामी विवेकानन्द",
+ y:"His rendering of the Katha line, and the one that stuck. Three verbs, no conditions attached."},
+{t:"Every bit of the strength you are waiting for is already inside you. Believe that first, then act like it.",
+ w:"Swami Vivekananda", s:"Swami Vivekananda", d:"स्वामी विवेकानन्द",
+ y:"Order matters here. He puts the belief before the proof, because waiting for proof is how people stay still."},
+{t:"Saying the name of the medicine does not cure the disease. You have to take it.",
+ w:"Adi Shankaracharya", s:"Vivekachudamani", d:"विवेकचूडामणि",
+ y:"Reading about discipline is not discipline. Watching one more video about waking up early is the disease naming its own cure."},
+{t:"Chant the name, you fool. All the grammar you have memorised will not come to your aid at the end.",
+ w:"Adi Shankaracharya", s:"Bhaja Govindam", d:"भज गोविन्दम्",
+ y:"He wrote this after watching an old man drilling grammar rules. Collecting information is not the same as doing the thing, and it is far more comfortable."},
+{t:"Do tomorrow's work today, and today's work now. The moment is gone in a blink — when will you do it then?",
+ w:"Kabir", s:"Kabir, Bhakti tradition", d:"कबीर",
+ y:"The doha every Indian kid gets taught and nobody applies. It inverts the usual advice: not do it today, do it now."},
+{t:"Let good thoughts reach us from every direction.",
+ w:"Rig Veda", s:"Rig Veda 1.89.1", d:"ऋग्वेद",
+ y:"Openness as a discipline. What you let in through the phone at 6am is thought material too, and you get to pick the source."}
+];
+
+/* ---------- storage ---------- */
+const mem = {};
+const Store = {
+  async get(k){
+    try{ if(window.storage){ const r = await window.storage.get(k); if(r) return JSON.parse(r.value); } }catch(e){}
+    try{ const v = localStorage.getItem(k); if(v!=null) return JSON.parse(v); }catch(e){}
+    return mem[k] ?? null;
+  },
+  async set(k,v){
+    mem[k]=v;
+    try{ if(window.storage){ await window.storage.set(k, JSON.stringify(v)); return; } }catch(e){}
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+  }
+};
+const K_CFG='firstlight:config', K_LOG='firstlight:log';
+const today = () => new Date().toISOString().slice(0,10);
+const hhmm  = d => String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+
+let cfg = { target:20, sens:2, ex:'push' };
+let log = { lastDone:null, streak:0, bails:0, recent:[], upAt:null, order:null, pos:0 };
+let practice = false;
+
+const screens=['gate','reps','quote','setup'];
+function show(n){
+  screens.forEach(s=>document.getElementById('s-'+s).classList.toggle('on', s===n));
+  document.getElementById('tag').textContent =
+    n==='quote' ? 'Open' : n==='reps' ? (practice?'Testing':'Counting') : 'Locked';
+}
+setInterval(()=>{document.getElementById('clock').textContent=hhmm(new Date());},1000);
+document.getElementById('clock').textContent=hhmm(new Date());
+
+/* ---------- sensor ---------- */
+const SENS=[{hi:1.8,lo:0.6},{hi:2.4,lo:0.8},{hi:3.1,lo:1.0},{hi:4.0,lo:1.3},{hi:5.2,lo:1.7}];
+const MIN_GAP=700;
+let baseline=9.81, smooth=0, armed=false, lastRep=0, fastRejects=0;
+let reps=0, gotEvent=false, listening=false, spin=0;
+
+const ring=document.getElementById('ring'), rx=ring.getContext('2d');
+function sizeRing(){ const r=ring.getBoundingClientRect();
+  ring.width=r.width*devicePixelRatio; ring.height=r.height*devicePixelRatio; }
+addEventListener('resize', sizeRing);
+
+function drawRing(){
+  if(!ring.width) sizeRing();
+  const w=ring.width, h=ring.height, cx=w/2, cy=h/2;
+  const pulse = 1 + Math.min(0.06, Math.abs(smooth)/90);
+  const R = (Math.min(w,h)/2 - 10*devicePixelRatio) * pulse;
+  const prog = Math.min(1, reps/cfg.target);
+  rx.clearRect(0,0,w,h);
+
+  // outer track
+  rx.lineWidth=1.5*devicePixelRatio; rx.strokeStyle='rgba(122,114,133,.25)';
+  rx.beginPath(); rx.arc(cx,cy,R,0,Math.PI*2); rx.stroke();
+  rx.beginPath(); rx.arc(cx,cy,R*0.74,0,Math.PI*2); rx.stroke();
+
+  // 24 spokes, lit by progress
+  const N=24, lit=Math.round(prog*N);
+  for(let i=0;i<N;i++){
+    const a = spin + (i/N)*Math.PI*2 - Math.PI/2;
+    const on = i < lit;
+    rx.strokeStyle = on ? '#FF7A18' : 'rgba(122,114,133,.2)';
+    rx.lineWidth = (on?3:1.2)*devicePixelRatio;
+    rx.beginPath();
+    rx.moveTo(cx+Math.cos(a)*R*0.74, cy+Math.sin(a)*R*0.74);
+    rx.lineTo(cx+Math.cos(a)*R,      cy+Math.sin(a)*R);
+    rx.stroke();
+  }
+  // progress arc
+  if(prog>0){
+    rx.lineCap='round'; rx.lineWidth=4*devicePixelRatio;
+    const g=rx.createLinearGradient(0,0,w,h); g.addColorStop(0,'#FFB320'); g.addColorStop(1,'#FF4D00');
+    rx.strokeStyle=g;
+    rx.beginPath(); rx.arc(cx,cy,R,-Math.PI/2,-Math.PI/2+prog*Math.PI*2); rx.stroke();
+    rx.lineCap='butt';
+  }
+  // inner hub
+  rx.strokeStyle='rgba(255,122,24,'+(0.15+prog*0.5)+')'; rx.lineWidth=1*devicePixelRatio;
+  rx.beginPath(); rx.arc(cx,cy,R*0.60,0,Math.PI*2); rx.stroke();
+
+  spin += 0.0016;
+  if(listening) requestAnimationFrame(drawRing);
+}
+
+function onMotion(e){
+  const a=e.accelerationIncludingGravity||e.acceleration;
+  if(!a||a.x==null) return;
+  gotEvent=true;
+  const mag=Math.hypot(a.x,a.y,a.z);
+  baseline=baseline*0.995+mag*0.005;
+  smooth=smooth*0.7+(mag-baseline)*0.3;
+  const t=SENS[cfg.sens], now=performance.now(), s=Math.abs(smooth);
+  if(!armed && s>t.hi) armed=true;
+  if(armed && s<t.lo){
+    armed=false;
+    if(now-lastRep>MIN_GAP){ lastRep=now; reps++; onRep(); }
+    else { fastRejects++; msg(fastRejects>2?"that's shaking, not reps":'slow it down', true); }
+  }
+}
+function msg(text,warn){
+  const el=document.getElementById('repMsg');
+  el.textContent=text; el.classList.toggle('warn',!!warn);
+}
+function onRep(){
+  document.getElementById('repCount').textContent=reps;
+  document.documentElement.style.setProperty('--heat', Math.min(1,reps/cfg.target).toFixed(3));
+  if(navigator.vibrate) navigator.vibrate(20);
+  msg(reps>=cfg.target?'done':(cfg.target-reps)+' left');
+  if(reps>=cfg.target){
+    stopSensor();
+    if(practice) setTimeout(renderSetup,700); else finish();
+  }
+}
+async function startSensor(){
+  reps=0;armed=false;smooth=0;fastRejects=0;lastRep=0;gotEvent=false;
+  document.getElementById('repCount').textContent='0';
+  document.getElementById('repTarget').textContent=cfg.target;
+  document.documentElement.style.setProperty('--heat',0);
+  msg('reading motion'); show('reps');
+  listening=true; sizeRing(); drawRing();
+  if(typeof DeviceMotionEvent==='undefined'){ msg('no motion sensor here',true); offerManual(); return; }
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+    try{
+      const r=await DeviceMotionEvent.requestPermission();
+      if(r!=='granted'){ msg('motion access denied',true); offerManual(); return; }
+    }catch(err){ msg('motion blocked here',true); offerManual(); return; }
+  }
+  addEventListener('devicemotion', onMotion);
+  setTimeout(()=>{ if(!gotEvent){ msg('no readings — needs https + safari',true); offerManual(); } },4000);
+}
+function stopSensor(){ removeEventListener('devicemotion',onMotion); listening=false; }
+function offerManual(){
+  const b=document.getElementById('bailBtn');
+  b.textContent='Count them myself — logged';
+  b.onclick=()=>{ reps=cfg.target; log.recent.unshift('manual'); onRep(); };
+}
+
+/* ---------- unlock ---------- */
+function shuffled(n){
+  const a=[...Array(n).keys()];
+  for(let i=n-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function nextQuote(){
+  if(!log.order || log.order.length!==QUOTES.length){ log.order=shuffled(QUOTES.length); log.pos=0; }
+  const q=QUOTES[log.order[log.pos % QUOTES.length]];
+  log.pos=(log.pos+1)%QUOTES.length;
+  if(log.pos===0) log.order=shuffled(QUOTES.length);
+  return q;
+}
+let currentQ=null;
+async function finish(){
+  const d=today();
+  if(log.lastDone!==d){
+    const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+    log.streak=(log.lastDone===y)?log.streak+1:1;
+    log.lastDone=d; log.upAt=hhmm(new Date());
+  }
+  currentQ=nextQuote();
+  log.recent.unshift('done'); log.recent=log.recent.slice(0,14);
+  await Store.set(K_LOG,log);
+  setTimeout(renderQuote,600);
+}
+async function bail(){
+  stopSensor();
+  log.bails++; log.recent.unshift('bail'); log.recent=log.recent.slice(0,14);
+  await Store.set(K_LOG,log);
+  document.documentElement.style.setProperty('--heat',0);
+  renderGate(); show('gate');
+}
+
+/* ---------- render ---------- */
+function renderGate(){
+  const b=log.recent.slice(0,7).filter(x=>x==='bail').length;
+  document.getElementById('bailNote').textContent = b?`Bailed ${b} of your last 7.`:'';
+  document.getElementById('gateSub').textContent = cfg.ex==='push'
+    ? `${cfg.target} pushups. Phone in your pocket. Nothing opens before they are done.`
+    : `${cfg.target} squats. Phone flat against your chest. Nothing opens before they are done.`;
+  show('gate');
+}
+function renderQuote(){
+  const q=currentQ||QUOTES[0];
+  document.getElementById('qText').textContent='"'+q.t+'"';
+  document.getElementById('qWho').textContent=q.w;
+  document.getElementById('qSrc').textContent=q.s;
+  document.getElementById('qDev').textContent=q.d;
+  const why=document.getElementById('qWhy');
+  why.textContent=q.y; why.classList.remove('on');
+  document.getElementById('whyBtn').textContent='What it means';
+  document.getElementById('streakN').textContent=log.streak;
+  document.getElementById('bailN').textContent=log.bails;
+  document.getElementById('upN').textContent=log.upAt||'--:--';
+  document.documentElement.style.setProperty('--heat',1);
+  show('quote');
+}
+function paintEx(){
+  document.getElementById('exPush').classList.toggle('sel',cfg.ex==='push');
+  document.getElementById('exSquat').classList.toggle('sel',cfg.ex==='squat');
+  document.getElementById('exNote').textContent = cfg.ex==='push'
+    ? 'Phone in your pocket or waistband. It reads your hips rising and dropping.'
+    : 'Hold the phone flat against your chest with both hands.';
+}
+function renderSetup(){
+  document.getElementById('rt').value=cfg.target;
+  document.getElementById('sens').value=cfg.sens;
+  document.getElementById('sensLbl').textContent=['very easy','easy','normal','strict','very strict'][cfg.sens];
+  paintEx(); show('setup');
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('startBtn').onclick=()=>{ practice=false;
+  const b=document.getElementById('bailBtn'); b.textContent='Give up — logged'; b.onclick=bail;
+  startSensor(); };
+document.getElementById('practiceBtn').onclick=()=>{ practice=true;
+  const b=document.getElementById('bailBtn'); b.textContent='Stop test';
+  b.onclick=()=>{ stopSensor(); renderSetup(); };
+  startSensor(); };
+document.getElementById('whyBtn').onclick=()=>{
+  const w=document.getElementById('qWhy'); w.classList.toggle('on');
+  document.getElementById('whyBtn').textContent = w.classList.contains('on') ? 'Hide' : 'What it means';
+};
+document.getElementById('exPush').onclick=()=>{cfg.ex='push';paintEx();};
+document.getElementById('exSquat').onclick=()=>{cfg.ex='squat';paintEx();};
+document.getElementById('toSetup').onclick=renderSetup;
+document.getElementById('toSetup2').onclick=renderSetup;
+document.getElementById('sens').oninput=e=>{
+  document.getElementById('sensLbl').textContent=['very easy','easy','normal','strict','very strict'][+e.target.value];
+};
+document.getElementById('saveBtn').onclick=async()=>{
+  cfg.target=Math.max(1,Math.min(200,+document.getElementById('rt').value||20));
+  cfg.sens=+document.getElementById('sens').value;
+  await Store.set(K_CFG,cfg);
+  currentQ ? renderQuote() : renderGate();
+};
+
+/* ---------- boot: locked every single run ---------- */
+(async function(){
+  cfg=Object.assign(cfg,(await Store.get(K_CFG))||{});
+  log=Object.assign(log,(await Store.get(K_LOG))||{});
+  sizeRing(); renderGate();
+})();
+</script>
+</body>
+</html>
