@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="First Light">
+<meta name="theme-color" content="#070B1A">
+<title>First Light</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,800&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --night:#070B1A; --deep:#0F1533; --mist:#8A93C2; --chalk:#E8EAF6;
+    --sun:#FFC24B; --flare:#FF5E5B; --dawn:0;
+    --display:"Bricolage Grotesque", ui-serif, system-ui, sans-serif;
+    --body:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --mono:"IBM Plex Mono", ui-monospace, monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--body);color:var(--chalk);background:var(--night);
+    overflow:hidden;-webkit-user-select:none;user-select:none}
+  .sky{position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(125% 72% at 50% 108%,
+        rgba(255,194,75,calc(var(--dawn)*0.88)) 0%,
+        rgba(255,122,80,calc(var(--dawn)*0.44)) 30%,
+        rgba(96,58,150,calc(var(--dawn)*0.32)) 57%,
+        transparent 78%),
+      linear-gradient(180deg,var(--night) 0%,var(--deep) 100%);
+    transition:background 420ms linear}
+  .wrap{position:relative;z-index:1;height:100%;max-width:480px;margin:0 auto;
+    padding:max(20px,env(safe-area-inset-top)) 22px max(20px,env(safe-area-inset-bottom));
+    display:flex;flex-direction:column}
+  .topbar{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--mist);text-transform:uppercase}
+  .screen{flex:1;display:none;flex-direction:column;min-height:0}
+  .screen.on{display:flex}
+  h1{font-family:var(--display);font-weight:800;font-size:clamp(33px,9.5vw,44px);
+    line-height:1;letter-spacing:-.02em;margin:24px 0 10px}
+  .sub{color:var(--mist);font-size:15px;line-height:1.5;margin:0 0 8px}
+  .spacer{flex:1}
+  button{font:inherit;cursor:pointer;border:0;border-radius:14px}
+  .primary{width:100%;padding:19px;background:var(--sun);color:#1A1206;
+    font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.01em}
+  .primary:active{transform:translateY(1px)}
+  .ghost{width:100%;padding:14px;background:transparent;color:var(--mist);
+    border:1px solid rgba(138,147,194,.28);font-size:14px;margin-top:10px}
+  .quiet{background:none;color:var(--mist);font-size:13px;padding:12px 0;width:100%;
+    text-decoration:underline;text-underline-offset:3px}
+  :focus-visible{outline:2px solid var(--sun);outline-offset:3px}
+  .meter{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:0}
+  .count{font-family:var(--mono);font-weight:600;font-size:clamp(84px,29vw,136px);
+    line-height:1;letter-spacing:-.04em}
+  .count .of{color:var(--mist);font-size:.28em;letter-spacing:.02em}
+  .repline{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--mist);margin-top:6px;min-height:16px;text-align:center;padding:0 10px}
+  .repline.warn{color:var(--flare)}
+  canvas{width:100%;height:84px;display:block;margin-top:20px;opacity:.9}
+  /* quote — the payoff */
+  .qmark{font-family:var(--display);font-weight:800;font-size:70px;line-height:.6;
+    color:var(--sun);opacity:.5;height:34px}
+  .quote{font-family:var(--display);font-weight:400;font-size:clamp(23px,6.4vw,30px);
+    line-height:1.32;letter-spacing:-.015em;margin:14px 0 0}
+  .src{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--sun);margin-top:22px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--mist);margin:30px 0 2px}
+  .task{display:flex;gap:12px;align-items:flex-start;padding:13px 0;
+    border-bottom:1px solid rgba(138,147,194,.16)}
+  .box{width:22px;height:22px;flex:none;border-radius:7px;border:1.5px solid rgba(138,147,194,.5);
+    margin-top:1px;display:grid;place-items:center;font-size:12px;color:var(--night)}
+  .task.done .box{background:var(--sun);border-color:var(--sun)}
+  .task.done .txt{color:var(--mist);text-decoration:line-through}
+  .txt{font-size:15px;line-height:1.4}
+  .stats{display:flex;gap:24px;font-family:var(--mono);font-size:11px;color:var(--mist);
+    letter-spacing:.06em;padding:22px 0 4px}
+  .stats b{display:block;color:var(--chalk);font-size:24px;font-weight:600;letter-spacing:-.02em}
+  .field{margin:15px 0}
+  label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--mist);margin-bottom:7px}
+  input[type=text],input[type=number]{width:100%;padding:14px;background:rgba(255,255,255,.05);
+    border:1px solid rgba(138,147,194,.24);border-radius:12px;color:var(--chalk);font:16px var(--body)}
+  input[type=range]{width:100%;accent-color:var(--sun)}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;padding:13px;background:rgba(255,255,255,.05);color:var(--mist);
+    border:1px solid rgba(138,147,194,.24);font-size:14px}
+  .seg button.sel{background:var(--sun);color:#1A1206;border-color:var(--sun)}
+  .scroll{overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0;flex:1}
+  .note{font-size:13px;color:var(--mist);line-height:1.5;margin-top:12px}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<div class="wrap">
+  <div class="topbar"><span id="clock">--:--</span><span id="tag">locked</span></div>
+
+  <section class="screen on" id="s-gate">
+    <h1>You just picked<br>up your phone.</h1>
+    <p class="sub" id="gateSub"></p>
+    <div class="spacer"></div>
+    <p class="sub" id="bailNote"></p>
+    <button class="primary" id="startBtn">Start</button>
+    <button class="quiet" id="toSetup">Settings</button>
+  </section>
+
+  <section class="screen" id="s-reps">
+    <div class="meter">
+      <div class="count"><span id="repCount">0</span><span class="of"> / <span id="repTarget">20</span></span></div>
+      <div class="repline" id="repMsg">reading motion…</div>
+      <canvas id="trace"></canvas>
+    </div>
+    <button class="ghost" id="bailBtn">Give up (logged)</button>
+  </section>
+
+  <section class="screen" id="s-quote">
+    <div class="scroll">
+      <div class="qmark">&ldquo;</div>
+      <p class="quote" id="qText">—</p>
+      <p class="src" id="qSrc"></p>
+      <div id="taskBlock"></div>
+      <div class="stats">
+        <div><b id="streakN">0</b>day streak</div>
+        <div><b id="bailN">0</b>bails</div>
+        <div><b id="upN">--:--</b>up at</div>
+      </div>
+    </div>
+    <button class="ghost" id="toSetup2">Settings</button>
+  </section>
+
+  <section class="screen" id="s-setup">
+    <div class="scroll">
+      <h1>Settings.</h1>
+      <div class="field"><label>Exercise</label>
+        <div class="seg"><button id="exPush">Pushups</button><button id="exSquat">Squats</button></div>
+        <p class="note" id="exNote"></p>
+      </div>
+      <div class="field"><label>Reps to unlock</label><input type="number" id="rt" min="1" max="200"></div>
+      <div class="field"><label>Sensitivity — <span id="sensLbl">normal</span></label>
+        <input type="range" id="sens" min="0" max="4" step="1">
+        <p class="note">Reps closer together than 0.7s are rejected, so shaking it in bed won't pass.</p></div>
+      <p class="eyebrow">Optional — three things for today</p>
+      <div class="field"><input type="text" id="t0" placeholder="Leave blank to skip"></div>
+      <div class="field"><input type="text" id="t1"></div>
+      <div class="field"><input type="text" id="t2"></div>
+      <button class="ghost" id="practiceBtn">Test the sensor</button>
+    </div>
+    <button class="primary" id="saveBtn">Save</button>
+  </section>
+</div>
+
+<script>
+/* ---------- quotes: plain-English renderings of public-domain texts ---------- */
+const QUOTES = [
+ {t:"You have a right to your work, never to its fruits. Let the fruit not be your motive, but do not fall into inaction either.", s:"Bhagavad Gita 2.47"},
+ {t:"No effort on this path is ever wasted. Not one step is lost.", s:"Bhagavad Gita 2.40"},
+ {t:"Lift yourself by yourself. Do not drag yourself down. You are your own friend and your own enemy.", s:"Bhagavad Gita 6.5"},
+ {t:"This discipline is not for the one who eats too much or too little, who sleeps too much or too little.", s:"Bhagavad Gita 6.16"},
+ {t:"Heat and cold, pleasure and pain — they arrive and they leave. They do not last. Learn to sit through them.", s:"Bhagavad Gita 2.14"},
+ {t:"Dwelling on a thing breeds attachment. Attachment breeds craving. Craving thwarted becomes anger, and anger takes the mind.", s:"Bhagavad Gita 2.62"},
+ {t:"Better your own work done imperfectly than another's done well.", s:"Bhagavad Gita 3.35"},
+ {t:"Do the work in front of you. Doing is better than not doing — you cannot even keep your body going without it.", s:"Bhagavad Gita 3.8"},
+ {t:"Do not abandon the work you were made for because it has flaws in it. Every effort has some flaw, as every fire has smoke.", s:"Bhagavad Gita 18.48"},
+ {t:"Pleasures that come from outside you have a beginning and an end. They are the womb of the pain that follows.", s:"Bhagavad Gita 5.22"},
+ {t:"Three gates open onto ruin: craving, anger, and greed. Shut all three.", s:"Bhagavad Gita 16.21"},
+ {t:"Work steadily, letting go of the attachment. Stay level whether it goes well or badly. That evenness is the discipline.", s:"Bhagavad Gita 2.48"},
+ {t:"For the one who has mastered himself, the self is an ally. For the one who has not, it works like an enemy.", s:"Bhagavad Gita 6.6"},
+ {t:"Nothing in this world purifies like understanding.", s:"Bhagavad Gita 4.38"},
+ {t:"Whatever you do, whatever you eat, whatever you give — make it an offering rather than a transaction.", s:"Bhagavad Gita 9.27"},
+ {t:"At dawn, when you cannot make yourself get up, tell yourself: I am rising to do the work of a human being.", s:"Marcus Aurelius, Meditations 5.1"},
+ {t:"Was I made for this — to lie under blankets and keep warm? Is that all you were built for?", s:"Marcus Aurelius, Meditations 5.1"},
+ {t:"Do every task as though it were the last thing you will ever do.", s:"Marcus Aurelius, Meditations 2.5"},
+ {t:"If something outside you is causing pain, it is not the thing itself but your verdict on it — and that you can revoke.", s:"Marcus Aurelius, Meditations 8.47"},
+ {t:"You could leave this life right now. Let that decide what you do and say.", s:"Marcus Aurelius, Meditations 2.11"},
+ {t:"You can withdraw into yourself at any hour. Nowhere is quieter than your own mind.", s:"Marcus Aurelius, Meditations 4.3"},
+ {t:"Give the task at hand your full attention, expect nothing from it, and you will do well enough.", s:"Marcus Aurelius, Meditations 3.12"},
+ {t:"When you wake, tell yourself: today I will run into interference, ingratitude, and people in a hurry. None of it is new.", s:"Marcus Aurelius, Meditations 2.1"},
+ {t:"Stop arguing about what a good person is. Be one.", s:"Marcus Aurelius, Meditations 10.16"},
+ {t:"Waste no more time on what a life is supposed to look like.", s:"Marcus Aurelius, Meditations 10.16"},
+ {t:"Everything we are begins with what we think. What we think, we become.", s:"Dhammapada 1.1"},
+ {t:"Better to conquer yourself once than a thousand men in battle a thousand times.", s:"Dhammapada 103"},
+ {t:"Another's faults are easy to see. Your own are the ones you hide from yourself.", s:"Dhammapada 252"},
+ {t:"Do not think a small wrong harmless. A pot fills drop by drop.", s:"Dhammapada 121"},
+ {t:"Do not think a small good pointless either. A pot fills the same way.", s:"Dhammapada 122"},
+ {t:"You are the one who does the work. No one walks the path for you.", s:"Dhammapada 276"},
+ {t:"A thousand hollow words are worth less than one word that brings peace.", s:"Dhammapada 100"},
+ {t:"Knowing others is intelligence. Knowing yourself is wisdom.", s:"Tao Te Ching 33"},
+ {t:"Mastering others takes force. Mastering yourself is real strength.", s:"Tao Te Ching 33"},
+ {t:"A journey of a thousand miles starts under your own feet.", s:"Tao Te Ching 64"},
+ {t:"Deal with the hard thing while it is still easy. Do the great thing while it is still small.", s:"Tao Te Ching 63"},
+ {t:"Stand on your toes and you will not stand for long.", s:"Tao Te Ching 24"},
+ {t:"Some things are in your control, and some are not. Almost everything depends on telling them apart.", s:"Epictetus, Enchiridion 1"},
+ {t:"First decide who you want to be. Then do what you have to do.", s:"Epictetus, Discourses 3.23"},
+ {t:"No great thing comes into being suddenly. Not even a fig.", s:"Epictetus, Discourses 1.15"},
+ {t:"You become what you repeatedly give your attention to.", s:"Epictetus, Discourses 2.18"},
+ {t:"We suffer more often in imagination than in reality.", s:"Seneca, Letters 13"},
+ {t:"It is not that we have too little time. It is that we throw so much of it away.", s:"Seneca, On the Shortness of Life"},
+ {t:"While we put things off, life races past.", s:"Seneca, Letters 1"},
+ {t:"Hold every hour tightly. Depend less on tomorrow and tomorrow has less hold on you.", s:"Seneca, Letters 1"},
+ {t:"Arise. Wake up. Find someone who knows, and do not stop until you understand.", s:"Katha Upanishad 1.3.14"},
+ {t:"The sharp edge of a blade is hard to walk on. The wise say the path is like that.", s:"Katha Upanishad 1.3.14"},
+ {t:"What you deeply desire, you become. What you become, you act on. What you act on, you turn into.", s:"Brihadaranyaka Upanishad 4.4.5"},
+ {t:"Effort keeps a person up. Its absence brings them down.", s:"Thirukkural 594"},
+ {t:"The one who moves without giving up will see the back of the thing they were chasing.", s:"Thirukkural 620"},
+ {t:"It does not matter how slowly you go, as long as you do not stop.", s:"Confucius, Analects"},
+ {t:"When it is obvious the goal cannot be reached, do not adjust the goal. Adjust what you are doing.", s:"Confucius, Analects"}
+];
+
+/* ---------- storage: works in preview, on your own host, or in memory ---------- */
+const mem = {};
+const Store = {
+  async get(k){
+    try{ if(window.storage){ const r = await window.storage.get(k); if(r) return JSON.parse(r.value); } }catch(e){}
+    try{ const v = localStorage.getItem(k); if(v!=null) return JSON.parse(v); }catch(e){}
+    return mem[k] ?? null;
+  },
+  async set(k,v){
+    mem[k]=v;
+    try{ if(window.storage){ await window.storage.set(k, JSON.stringify(v)); return; } }catch(e){}
+    try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){}
+  }
+};
+const K_CFG='firstlight:config', K_LOG='firstlight:log';
+const today = () => new Date().toISOString().slice(0,10);
+const hhmm  = d => String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+
+let cfg = { target:20, sens:2, ex:'push', tasks:['','',''] };
+let log = { lastDone:null, streak:0, bails:0, recent:[], upAt:null, done:[false,false,false] };
+let practice = false;
+
+const screens = ['gate','reps','quote','setup'];
+function show(name){
+  screens.forEach(s => document.getElementById('s-'+s).classList.toggle('on', s===name));
+  document.getElementById('tag').textContent =
+    name==='quote' ? 'unlocked' : name==='reps' ? (practice?'testing':'counting') : 'locked';
+}
+setInterval(()=>{ document.getElementById('clock').textContent = hhmm(new Date()); }, 1000);
+document.getElementById('clock').textContent = hhmm(new Date());
+
+/* ---------- sensor ---------- */
+const SENS = [ {hi:1.8,lo:0.6}, {hi:2.4,lo:0.8}, {hi:3.1,lo:1.0}, {hi:4.0,lo:1.3}, {hi:5.2,lo:1.7} ];
+const MIN_GAP = 700;
+let baseline = 9.81, smooth = 0, armed = false, lastRep = 0, fastRejects = 0;
+let reps = 0, gotEvent = false, listening = false;
+const buf = new Array(140).fill(0);
+const cv = document.getElementById('trace'), ctx = cv.getContext('2d');
+function sizeCanvas(){ const r = cv.getBoundingClientRect();
+  cv.width = r.width*devicePixelRatio; cv.height = r.height*devicePixelRatio; }
+addEventListener('resize', sizeCanvas);
+
+function draw(){
+  if(!cv.width) sizeCanvas();
+  const w = cv.width, h = cv.height, mid = h/2;
+  ctx.clearRect(0,0,w,h);
+  ctx.strokeStyle='rgba(138,147,194,.22)'; ctx.lineWidth=1*devicePixelRatio;
+  ctx.beginPath(); ctx.moveTo(0,mid); ctx.lineTo(w,mid); ctx.stroke();
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--sun').trim();
+  ctx.lineWidth=2*devicePixelRatio; ctx.lineJoin='round';
+  ctx.beginPath();
+  for(let i=0;i<buf.length;i++){
+    const x=(i/(buf.length-1))*w;
+    const y=mid - Math.max(-1,Math.min(1, buf[i]/7))*(mid*0.86);
+    i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+  }
+  ctx.stroke();
+  if(listening) requestAnimationFrame(draw);
+}
+
+function onMotion(e){
+  const a = e.accelerationIncludingGravity || e.acceleration;
+  if(!a || a.x==null) return;
+  gotEvent = true;
+  const mag = Math.hypot(a.x,a.y,a.z);
+  baseline = baseline*0.995 + mag*0.005;
+  smooth = smooth*0.7 + (mag - baseline)*0.3;
+  buf.push(smooth); buf.shift();
+  const t = SENS[cfg.sens], now = performance.now(), s = Math.abs(smooth);
+  if(!armed && s > t.hi) armed = true;
+  if(armed && s < t.lo){
+    armed = false;
+    if(now - lastRep > MIN_GAP){ lastRep = now; reps++; onRep(); }
+    else { fastRejects++; msg(fastRejects>2 ? "too fast — that's shaking" : 'slow it down', true); }
+  }
+}
+function msg(text, warn){
+  const el = document.getElementById('repMsg');
+  el.textContent = text; el.classList.toggle('warn', !!warn);
+}
+function onRep(){
+  document.getElementById('repCount').textContent = reps;
+  document.documentElement.style.setProperty('--dawn', Math.min(1, reps/cfg.target).toFixed(3));
+  if(navigator.vibrate) navigator.vibrate(18);
+  msg(reps >= cfg.target ? 'done' : (cfg.target - reps) + ' to go');
+  if(reps >= cfg.target){
+    stopSensor();
+    if(practice) setTimeout(renderSetup, 700); else finish();
+  }
+}
+async function startSensor(){
+  reps=0; armed=false; smooth=0; fastRejects=0; lastRep=0; gotEvent=false; buf.fill(0);
+  document.getElementById('repCount').textContent='0';
+  document.getElementById('repTarget').textContent=cfg.target;
+  document.documentElement.style.setProperty('--dawn',0);
+  msg('reading motion…'); show('reps');
+  if(typeof DeviceMotionEvent === 'undefined'){ msg('no motion sensor here',true); offerManual(); return; }
+  if(typeof DeviceMotionEvent.requestPermission === 'function'){
+    try{
+      const r = await DeviceMotionEvent.requestPermission();
+      if(r !== 'granted'){ msg('motion access denied',true); offerManual(); return; }
+    }catch(err){ msg('motion blocked here',true); offerManual(); return; }
+  }
+  addEventListener('devicemotion', onMotion);
+  listening = true; sizeCanvas(); draw();
+  setTimeout(()=>{ if(!gotEvent){ msg('no readings — needs https + safari',true); offerManual(); } }, 4000);
+}
+function stopSensor(){ removeEventListener('devicemotion', onMotion); listening = false; }
+function offerManual(){
+  const b = document.getElementById('bailBtn');
+  b.textContent = 'Count them myself (marked in the log)';
+  b.onclick = () => { reps = cfg.target; log.recent.unshift('manual'); onRep(); };
+}
+
+/* ---------- unlock ---------- */
+function quoteOfDay(){
+  const now = new Date();
+  const doy = Math.floor((now - new Date(now.getFullYear(),0,0)) / 864e5);
+  return QUOTES[(doy * 7919) % QUOTES.length];
+}
+async function finish(){
+  const d = today();
+  if(log.lastDone !== d){
+    const y = new Date(Date.now()-864e5).toISOString().slice(0,10);
+    log.streak = (log.lastDone === y) ? log.streak+1 : 1;
+    log.lastDone = d; log.upAt = hhmm(new Date()); log.done = [false,false,false];
+  }
+  log.recent.unshift('done'); log.recent = log.recent.slice(0,14);
+  await Store.set(K_LOG, log);
+  setTimeout(renderQuote, 650);
+}
+async function bail(){
+  stopSensor();
+  log.bails++; log.recent.unshift('bail'); log.recent = log.recent.slice(0,14);
+  await Store.set(K_LOG, log);
+  document.documentElement.style.setProperty('--dawn',0);
+  renderGate(); show('gate');
+}
+
+/* ---------- render ---------- */
+function renderGate(){
+  const b = log.recent.slice(0,7).filter(x => x==='bail').length;
+  document.getElementById('bailNote').textContent = b ? `You bailed ${b} of the last 7 mornings.` : '';
+  document.getElementById('gateSub').textContent = cfg.ex==='push'
+    ? `${cfg.target} pushups. Phone in your pocket or waistband — it reads your hips.`
+    : `${cfg.target} squats. Hold the phone flat against your chest.`;
+}
+function renderQuote(){
+  const q = quoteOfDay();
+  document.getElementById('qText').textContent = q.t;
+  document.getElementById('qSrc').textContent = q.s;
+  const tb = document.getElementById('taskBlock'); tb.innerHTML = '';
+  if(cfg.tasks.some(t => t.trim())){
+    const h = document.createElement('p'); h.className='eyebrow'; h.textContent='Today';
+    tb.appendChild(h);
+    cfg.tasks.forEach((t,i)=>{
+      if(!t.trim()) return;
+      const row = document.createElement('div');
+      row.className = 'task' + (log.done[i] ? ' done' : '');
+      row.innerHTML = `<div class="box">${log.done[i]?'&#10003;':''}</div><div class="txt"></div>`;
+      row.querySelector('.txt').textContent = t;
+      row.onclick = async () => { log.done[i]=!log.done[i]; await Store.set(K_LOG,log); renderQuote(); };
+      tb.appendChild(row);
+    });
+  }
+  document.getElementById('streakN').textContent = log.streak;
+  document.getElementById('bailN').textContent = log.bails;
+  document.getElementById('upN').textContent = log.upAt || '--:--';
+  document.documentElement.style.setProperty('--dawn',1);
+  show('quote');
+}
+function paintEx(){
+  document.getElementById('exPush').classList.toggle('sel', cfg.ex==='push');
+  document.getElementById('exSquat').classList.toggle('sel', cfg.ex==='squat');
+  document.getElementById('exNote').textContent = cfg.ex==='push'
+    ? 'Phone goes in your pocket or waistband. It counts your hips rising and dropping.'
+    : 'Hold the phone flat against your chest with both hands.';
+}
+function renderSetup(){
+  document.getElementById('rt').value = cfg.target;
+  document.getElementById('sens').value = cfg.sens;
+  document.getElementById('sensLbl').textContent = ['very easy','easy','normal','strict','very strict'][cfg.sens];
+  ['t0','t1','t2'].forEach((id,i)=> document.getElementById(id).value = cfg.tasks[i] || '');
+  paintEx(); show('setup');
+}
+
+/* ---------- wiring ---------- */
+document.getElementById('startBtn').onclick = () => { practice=false;
+  const b=document.getElementById('bailBtn'); b.textContent='Give up (logged)'; b.onclick=bail;
+  startSensor(); };
+document.getElementById('practiceBtn').onclick = () => { practice=true;
+  const b=document.getElementById('bailBtn'); b.textContent='Stop test';
+  b.onclick=()=>{ stopSensor(); renderSetup(); };
+  startSensor(); };
+document.getElementById('exPush').onclick  = () => { cfg.ex='push';  paintEx(); };
+document.getElementById('exSquat').onclick = () => { cfg.ex='squat'; paintEx(); };
+document.getElementById('toSetup').onclick = renderSetup;
+document.getElementById('toSetup2').onclick = renderSetup;
+document.getElementById('sens').oninput = e => {
+  document.getElementById('sensLbl').textContent = ['very easy','easy','normal','strict','very strict'][+e.target.value];
+};
+document.getElementById('saveBtn').onclick = async () => {
+  cfg.target = Math.max(1, Math.min(200, +document.getElementById('rt').value || 20));
+  cfg.sens = +document.getElementById('sens').value;
+  cfg.tasks = ['t0','t1','t2'].map(id => document.getElementById(id).value);
+  await Store.set(K_CFG, cfg);
+  (log.lastDone === today()) ? renderQuote() : (renderGate(), show('gate'));
+};
+
+/* ---------- boot ---------- */
+(async function(){
+  cfg = Object.assign(cfg, (await Store.get(K_CFG)) || {});
+  log = Object.assign(log, (await Store.get(K_LOG)) || {});
+  sizeCanvas();
+  if(log.lastDone === today()) renderQuote();
+  else { renderGate(); show('gate'); }
+})();
+</script>
+</body>
+</html>
